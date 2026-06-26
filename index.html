@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resident Evil Quiz</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+  color: white;
+  text-align: center;
+  background: linear-gradient(135deg, #050505, #0a0000, #000);
+  direction: rtl;
+  padding: 0 5px;
+  overflow-x: hidden;
+}
+
+@keyframes intro {
+  0% {
+    opacity: 0;
+    transform: scale(1.01);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+#loginBox{
+  width: min(90%, 420px);
+  margin: 120px auto;
+  padding: 22px;
+
+  background:
+    linear-gradient(145deg, rgba(25,0,0,0.95), rgba(0,0,0,0.95));
+
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-left: 5px solid whitesmoke;
+  border-right: 5px solid whitesmoke;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 0 25px rgba(255,0,0,0.25),
+    inset 0 0 30px rgba(0,0,0,0.8);
+
+  text-align: center;
+  color: #fff;
+
+  animation: loginBoot 1s ease forwards;
+}
+
+/* 💀 ورود سینمایی */
+@keyframes loginBoot{
+  0%{
+    opacity: 0;
+    transform: scale(1.1);
+    filter: blur(10px);
+  }
+  100%{
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* 🧠 title */
+#loginBox h2{
+  color: #ff2b2b;
+  margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(255,0,0,0.4);
+  letter-spacing: 1px;
+}
+
+/* 🔴 input */
+#nameInput{
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+
+  background: #000;
+  border: 1px solid #ff0000;
+  border-radius: 8px;
+
+  color: #fff;
+  outline: none;
+
+  box-shadow: inset 0 0 12px rgba(255,0,0,0.2);
+  transition: .2s;
+}
+
+#nameInput:focus{
+  border-color: #ff3b3b;
+  box-shadow: 0 0 12px rgba(255,0,0,0.4);
+}
+
+/* 🔥 button */
+#loginBox {
+  display: none;
+}
+
+#loginBox button{
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+
+  background: linear-gradient(90deg, #8b0000, #ff0000);
+  border: none;
+
+  color: white;
+  font-weight: bold;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 0 15px rgba(255,0,0,0.3),
+    inset 0 0 10px rgba(0,0,0,0.5);
+
+  transition: .2s;
+}
+
+#loginBox button:hover{
+  transform: scale(1.03);
+  box-shadow: 0 0 25px rgba(255,0,0,0.5);
+}
+
+/* ⚠️ error text */
+#errorText{
+  margin-top: 10px;
+  color: #ff4d4d;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* عنوان */
+h1 {
+  margin-top: 15px;
+  color: #ff1e1e;
+  text-shadow: 0 0 12px red;
+}
+
+#app {
+  opacity: 0;
+  transform: scale(1.03);
+  filter: blur(8px);
+
+  animation: intro 1.2s ease forwards;
+}
+
+@keyframes intro {
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* پروفایل */
+#profile{
+  width: min(95%, 500px);
+
+  margin: 10px auto;
+
+  padding: 10px 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #111;
+
+  border: 1px solid rgba(255,0,0,.3);
+  border-radius: 12px;
+}
+
+#playerName{
+  color: white;
+  font-weight: bold;
+}
+
+#playerRank{
+  color: gold;
+  font-weight: bold;
+}
+
+/* باکس اصلی */
+#gameBox {
+  width: min(95%, 500px);
+  margin: 15px auto;
+  padding: 15px;
+  background: #111;
+  border: 2px solid red;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+  box-sizing: border-box;
+  overflow: hidden;
+
+  transition: opacity .4s ease, transform .4s ease;
+}
+@media (max-width: 480px) {
+
+  #gameBox {
+    width: 97%;
+    padding: 10px;
+    border-width: 1px;
+    border-radius: 10px;
+  }
+}
+
+/* تصویر */
+#img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 25px;
+}
+
+/* سوال */
+#question {
+  margin: 15px 0;
+  font-size: 16px;
+}
+
+/* 🔥 OTP BOX */
+#otpBox {
+  direction: rtl;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 5px;
+  width: 100%;
+}
+
+.otpInput {
+  width: 42px;
+  height: 50px;
+  text-align: center;
+  font-size: 20px;
+  background: black;
+  color: white;
+  border: 1px solid red;
+  border-radius: 6px;
+  outline: none;
+  direction: rtl;
+}
+
+/* دکمه */
+button {
+  width: 85%;
+  margin-top: 15px;
+  padding: 12px;
+  background: linear-gradient(45deg, #ff0000, #5a0000);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 15px red;
+}
+
+/* افکت اشتباه */
+.glitch {
+  animation: shake 0.2s;
+}
+
+@keyframes shake {
+  0% { transform: translate(0); }
+  25% { transform: translate(-3px, 3px); }
+  50% { transform: translate(3px, -3px); }
+  75% { transform: translate(-3px, 0); }
+  100% { transform: translate(0); }
+}
+
+.shake {
+  animation: shake 0.2s;
+}
+
+/* 🚨 فقط فلش قرمز، بدون opacity/transition */
+.red-flash {
+  background: rgba(200, 0, 0, 0.4) !important;
+}
+
+@keyframes redFlash {
+  0% {
+    background-color: rgba(255, 0, 0, 0);
+  }
+  30% {
+    background-color: rgba(255, 0, 0, 0.35);
+  }
+  100% {
+    background-color: rgba(255, 0, 0, 0);
+  }
+}
+
+
+/* موبایل */
+@media (max-width:600px){
+
+  h1{
+    font-size: 24px;
+    margin-top: 20px;
+  }
+
+  #profile{
+    font-size: 14px;
+  }
+
+  #gameBox{
+    width: 85%;
+    padding: 10px;
+    border-width: 1px;
+  }
+
+  #question{
+    font-size: 15px;
+  }
+
+  .otpInput{
+    width: 42px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+}
+
+.fade-out {
+  opacity: 0;
+  transform: scale(0.96) translateY(10px);
+}
+
+.fade-in {
+  opacity: 1;
+  transform: scale(1);
+  transition: 0.3s ease;
+}
+
+#musicBtn{
+  width: auto;
+  min-width: 100px;
+  height: 34px;
+  margin: 0;
+  padding: 0 12px;
+  background: rgba(255,0,0,0.12);
+  border: 1px solid rgba(255,0,0,0.4);
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: none;
+}
+/*  دکمه پخش موزیک پس زمینه */
+@media (max-width:480px){
+  #musicBtn{
+    font-size:12px;
+    padding:6px 15px;
+  }
+}
+
+#leaderboard{
+  width: min(95%,500px);
+  margin: 20px auto;
+  padding: 15px;
+  background: #0d0d0d;
+  border: 2px solid #8b0000;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255,0,0,.25);
+}
+
+#leaderboard h2{
+  margin-top: 0;
+  color: #ff4040;
+  text-shadow: 0 0 10px red;
+}
+
+.leaderItem{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(255,0,0,.08);
+  border-left: 6px solid red;
+  border-radius: 8px;
+}
+
+.firstPlace{
+  border-left-color: gold;
+}
+
+.leaderItem span{
+  font-size: 14px;
+}
+
+#onlineCount{
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(255,0,0,.08);
+  border: 1px solid rgba(255,0,0,.3);
+  border-radius: 8px;
+  color: #ff6666;
+  font-size: 14px;
+  box-shadow: inset 0 0 10px rgba(255,0,0,.15);
+}
+
+#onlinePlayers{
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 0 8px red;
+}
+
+.onlineDot{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  margin-left:6px;
+  border-radius:50%;
+  background:#00ff66;
+  box-shadow:0 0 10px #00ff66;
+}
+
+#bootScreen {
+  position: fixed;
+  inset: 0;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: red;
+  font-size: 40px;
+  font-family: 'Gill Sans';
+}
+
+#bootLogo {
+  width: 550px;
+  margin-bottom: 15px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+</style>
+</head>
+
+<body>
+
+<h1>☣ Resident Evil Quiz ☣</h1>
+
+<div id="loginBox">
+  <h2>Enter Your Name</h2>
+
+  <input id="nameInput" placeholder="Player name..." />
+
+  <button id="startBtn" onclick="startGame()">Start</button>
+
+  <p id="errorText"></p>
+</div>
+
+<div id="bootScreen">
+  <img src="images/loading.jpg" alt="Umbrella Logo" id="bootLogo">
+  <p>...Loading</p>
+</div>
+
+<div id="app" style="display:none;">
+
+  <!-- PROFILE BAR -->
+  <div id="profile">
+
+    <button id="musicBtn" onclick="toggleMusic()">
+      🎵 Music
+    </button>
+
+    <span id="playerName">Player</span>
+
+    <span id="playerRank">Lv.1</span>
+
+  </div>
+
+  <!-- GAME BOX -->
+  <div id="gameBox">
+
+    <h2 id="levelText"></h2>
+
+    <img id="img" />
+
+    <p id="question"></p>
+
+    <div id="otpBox"></div>
+
+    <button onclick="check()">Submit</button>
+
+  </div>
+
+  <!-- AUDIO -->
+  <audio id="bgMusic" src="sounds/Umbrella.mp3" loop></audio>
+
+  <!-- LEADERBOARD -->
+  <div id="leaderboard">
+
+    <div id="onlineCount">
+      <span class="onlineDot"></span>
+      Online Survivors:
+      <span id="onlinePlayers">0</span>
+    </div>
+
+    <h2>🏆 Top Survivors</h2>
+
+    <!-- JS injects items here -->
+  </div>
+
+</div>
+
+<script>
+
+/*************** SUPABASE ***************/
+const SUPABASE_URL = "https://usxxaeeaflsjzckhnnsh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_kRkM-mc0g90Z4XD4MSdTrg_QaVJuxZT";
+
+
+let currentPlayer = null;
+let level = 1;
+let musicPlaying = false;
+let realtimeStarted = false;
+let checking = false;
+
+/*************** GAME DATA ***************/
+const data = [
+  { q: "اسم این دختر کوچولو داخل رزیدنت اویل 9 چی بود ؟", a: "امیلی", img: "images/1.jpg" },
+  { q: "نسخه کد ورنیکا ریمیک در چه سالی خواهد آمد؟", a: "2027", img: "images/2.jpg" },
+  { q: "حدس کاراکتر تصویر", a: "اشلی", img: "images/3.jpg", blur: 15},
+  { q: "اسم کاراکتر داخل تصویر", a: "جک", img: "images/4.jpg" },
+  { q: "رزیدنت اویل 2 ریمیک از 100 چه نمره ای دریافت کرد ؟ (متاکریتیک)", a: "91", img: "images/5.jpg" },
+  { q: "اسم کاراکتر داخل تصویر", a: "کارلوس", img: "images/6.jpg", blur: 12 },
+  { q: "چه ویروسی در راکون سیتی شیوع پیدا کرد ؟", a: "تی", img: "images/7.jpg"},
+  { q: "اسم دختر ایتن ؟", a: "رز", img: "images/8.jpg" },
+  { q: "سن لیان در نسخه  2 ؟", a: "21", img: "images/9.jpg" },
+  { q: "لیان اول نسخه 6 مجبور میشه چه کسی رو بکشه ؟", a: "رییسجمهور", img: "images/10.jpg" }
+];
+
+/*************** BOOT ***************/
+window.onload = async function () {
+
+  const boot = document.getElementById("bootScreen");
+  boot.style.display = "flex";
+
+  // ⏳ مدت زمان لودینگ (اینجا تنظیم می‌کنی)
+  const MIN_LOADING_TIME = 1000; // 2 ثانیه
+
+  const startTime = Date.now();
+
+  if (!window.supabase) {
+    console.error("Supabase CDN لود نشده ❌");
+    return;
+  }
+
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const id = localStorage.getItem("player_id");
+
+  // 🔄 حداقل زمان لودینگ رعایت بشه
+  const elapsed = Date.now() - startTime;
+  const wait = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+  setTimeout(() => {
+
+    boot.style.display = "none";
+
+    if (!id || id === "null" || id === "undefined") {
+      showLogin();
+    } else {
+      loadPlayer(id);
+    }
+
+  }, wait);
+};
+
+/*************** LOGIN ***************/
+function showLogin() {
+  document.getElementById("loginBox").style.display = "block";
+  document.getElementById("app").style.display = "none";
+}
+
+async function startGame() {
+
+  const btn = document.getElementById("startBtn");
+  const name = document.getElementById("nameInput").value.trim();
+
+  // جلوگیری از چند بار کلیک
+  if (btn.disabled) return;
+  btn.disabled = true;
+
+  // نام خالی
+  if (!name) {
+    btn.disabled = false;
+    return;
+  }
+
+  const nameLower = name.toLowerCase();
+
+  // بررسی تکراری بودن نام
+  const { data: exists, error: checkError } = await supabase
+    .from("evil_fan_players")
+    .select("id")
+    .eq("name_lower", nameLower);
+
+  if (checkError) {
+    console.error(checkError);
+    alert("خطا در اتصال به سرور");
+    btn.disabled = false;
+    return;
+  }
+
+  if (exists && exists.length > 0) {
+    alert("این اسم قبلاً استفاده شده");
+    btn.disabled = false;
+    return;
+  }
+
+  // ساخت بازیکن
+  const { data, error } = await supabase
+    .from("evil_fan_players")
+    .insert([
+      {
+        name,
+        name_lower: nameLower,
+        stage: 1
+      }
+    ])
+    .select();
+
+  if (error) {
+    console.error(error);
+    alert(error.message);
+    btn.disabled = false;
+    return;
+  }
+
+  currentPlayer = data[0];
+
+  localStorage.setItem("player_id", currentPlayer.id);
+
+  // فعال کردن دوباره دکمه
+  btn.disabled = false;
+
+  afterLogin();
+}
+
+/*************** LOAD PLAYER ***************/
+async function loadPlayer(id) {
+
+  const { data, error } = await supabase
+    .from("evil_fan_players")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle(); // 👈 مهم‌ترین تغییر
+
+  // ❌ خطای واقعی (اینترنت / سرور)
+  if (error) {
+    console.error(error);
+    alert("مشکل در اتصال به سرور");
+    return;
+  }
+
+  // 👤 کاربر وجود ندارد → باید بره ثبت‌نام
+  if (!data) {
+    localStorage.removeItem("player_id");
+    showLogin();
+    return;
+  }
+
+  // ✅ کاربر پیدا شد
+  currentPlayer = data;
+  level = Number(data.stage || 1);
+
+  afterLogin();
+}
+
+/*************** AFTER LOGIN ***************/
+function afterLogin() {
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  // 👤 پروفایل
+  document.getElementById("playerName").innerText = currentPlayer.name;
+  document.getElementById("playerRank").innerText = "Lv." + currentPlayer.stage;
+
+  // 🎮 شروع بازی
+  load();
+
+  // 🏆 لود لیدربرد
+  loadLeaderboard();
+
+  // 🔴 شروع real-time sync (اگر قبلاً فعال نکردی)
+  startRealtime();
+
+  updateOnlineCount();
+  setInterval(updateOnlineCount, 5000);
+}
+
+/*************** showEndScreen ***************/
+function showEndScreen() {
+
+  const box = document.getElementById("gameBox");
+
+  box.innerHTML = `
+    <h2 style="color:#ff2b2b;text-shadow:0 0 15px red;">
+      ⏳ مراحل بعدی هنوز منتشر نشده است
+    </h2>
+
+    <p style="color:#ccc;margin-top:10px;line-height:1.8;">
+      شما به آخرین مرحله موجود رسیدید.<br>
+      به‌زودی مراحل جدید اضافه خواهد شد...
+    </p>
+
+    <p style="color:#777;font-size:12px;margin-top:15px;">
+      ☣ UMBRELLA CORPORATION ☣
+    </p>
+  `;
+
+}
+/*************** GAME ***************/
+function load() {
+
+  const box = document.getElementById("gameBox");
+
+  // 💀 اگر مرحله وجود ندارد
+  if (!data[level - 1]) {
+    showEndScreen();
+    return;
+  }
+
+  // 🎮 لود مرحله
+  document.getElementById("levelText").innerText =
+    "Level " + level;
+
+  document.getElementById("question").innerText =
+    data[level - 1].q;
+
+  const image = document.getElementById("img");
+
+  image.src = data[level - 1].img;
+
+  // 🌫️ بلور داینامیک (عدد محور)
+  if (data[level - 1].blur) {
+    image.style.filter = `blur(${data[level - 1].blur}px)`;
+  } else {
+    image.style.filter = "none";
+  }
+
+  createInputs(data[level - 1].a.length);
+}
+
+async function check() {
+
+  if (checking) return;
+  checking = true;
+
+  let val = getAnswer();
+
+  if (!data[level - 1]) {
+    checking = false;
+    return;
+  }
+
+  if (val === data[level - 1].a) {
+
+    const box = document.getElementById("gameBox");
+    box.classList.add("fade-out");
+
+    setTimeout(async () => {
+
+      const nextLevel = level + 1;
+
+      // 💀 اگر مرحله بعد وجود ندارد
+      if (!data[nextLevel - 1]) {
+
+        showEndScreen();
+
+        checking = false;
+
+        requestAnimationFrame(() => {
+          box.classList.remove("fade-out");
+        });
+
+        return;
+      }
+
+      // ➡️ رفتن به مرحله بعد
+      level = nextLevel;
+      currentPlayer.stage = level;
+
+      // 📊 آپدیت UI پروفایل
+      document.getElementById("playerRank").innerText =
+        "Lv." + level;
+
+      // 💾 ذخیره در دیتابیس
+      await supabase
+        .from("evil_fan_players")
+        .update({
+          stage: level
+        })
+        .eq("id", currentPlayer.id);
+
+      // 🏆 لیدربرد
+      if (typeof loadLeaderboard === "function") {
+        loadLeaderboard();
+      }
+
+      // 🎮 لود مرحله جدید
+      load();
+
+      checking = false;
+
+      requestAnimationFrame(() => {
+        box.classList.remove("fade-out");
+      });
+
+    }, 300);
+
+  } else {
+
+    const box = document.getElementById("gameBox");
+
+    box.classList.add("shake");
+    setTimeout(() => box.classList.remove("shake"), 200);
+
+    document.body.classList.add("red-flash");
+    setTimeout(() => document.body.classList.remove("red-flash"), 150);
+
+    document.querySelectorAll(".otpInput").forEach(i => i.value = "");
+    document.querySelector(".otpInput")?.focus();
+
+    checking = false;
+  }
+}
+/*************** INPUTS ***************/
+function createInputs(len) {
+
+  const box = document.getElementById("otpBox");
+  box.innerHTML = "";
+
+  for (let i = 0; i < len; i++) {
+
+    const input = document.createElement("input");
+    input.className = "otpInput";
+    input.maxLength = 1;
+
+    input.addEventListener("input", (e) => {
+      if (e.target.value && i < len - 1) {
+        box.children[i + 1].focus();
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !e.target.value && i > 0) {
+        box.children[i - 1].focus();
+      }
+    });
+
+    box.appendChild(input);
+  }
+
+  box.children[0]?.focus();
+}
+
+function getAnswer() {
+  return [...document.querySelectorAll(".otpInput")]
+    .map(i => i.value)
+    .join("");
+}
+
+/*************** Leaderboard ***************/
+async function loadLeaderboard() {
+
+  const { data } = await supabase
+    .from("evil_fan_players")
+    .select("name, stage")
+    .order("stage", { ascending: false })
+    .limit(10);
+
+  const board = document.getElementById("leaderboard");
+
+  // پاک کردن آیتم‌های قبلی (غیر از header)
+  document.querySelectorAll(".leaderItem").forEach(el => el.remove());
+
+  data.forEach((player, index) => {
+
+    const div = document.createElement("div");
+    div.className = "leaderItem";
+
+    if (index === 0) div.classList.add("firstPlace");
+
+    div.innerHTML = `
+      <span>#${index + 1}</span>
+      <span>${player.name}</span>
+      <span>Lv.${player.stage}</span>
+    `;
+
+    board.appendChild(div);
+  });
+
+}
+
+/*************** startRealtime ***************/
+function startRealtime() {
+
+  // اگر قبلاً وصل شده، دوباره نساز
+  if (realtimeStarted) return;
+
+  realtimeStarted = true;
+
+  supabase
+    .channel("players")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "evil_fan_players"
+      },
+      () => {
+        loadLeaderboard();
+        updateOnlineCount();
+      }
+    )
+    .subscribe();
+
+}
+
+/*************** MUSIC ***************/
+function toggleMusic() {
+
+  const music = document.getElementById("bgMusic");
+  const btn = document.getElementById("musicBtn");
+
+  music.volume = 0.4;
+
+  if (musicPlaying) {
+    music.pause();
+    btn.innerText = "🎵 Play";
+  } else {
+    music.play();
+    btn.innerText = "⏸ Stop";
+  }
+
+  musicPlaying = !musicPlaying;
+}
+
+/*************** آپدیت آنلاین بودن کاربر ***************/
+setInterval(async () => {
+
+  if (!currentPlayer) return;
+
+  await supabase
+    .from("evil_fan_players")
+    .update({
+      updated_at: new Date()
+    })
+    .eq("id", currentPlayer.id);
+
+}, 10000);
+
+async function updateOnlineCount() {
+
+  if (!supabase) return;
+
+  const now = new Date();
+  const last5min = new Date(now.getTime() - 5 * 60 * 1000);
+
+  const { data, error } = await supabase
+    .from("evil_fan_players")
+    .select("id")
+    .gte("updated_at", last5min.toISOString());
+
+  if (error) {
+    console.error("Online Count:", error);
+    return;
+  }
+
+  const online = data ? data.length : 0;
+
+  document.getElementById("onlinePlayers").innerText = online;
+
+}
+
+</script>
+
+</body>
+</html>
