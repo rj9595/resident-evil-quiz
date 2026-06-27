@@ -727,7 +727,7 @@ function afterLogin() {
   setInterval(() => {
     heartbeat();
     updateOnlineCount();
-  }, 5000);
+  }, 3000);
 
 }
 
@@ -1000,12 +1000,12 @@ async function updateOnlineCount() {
   if (!supabase) return;
 
   const now = new Date();
-  const last15sec = new Date(now.getTime() - 15000);
+  const last15sec = new Date(now.getTime() - 5000);
 
   const { data, error } = await supabase
     .from("evil_fan_players")
     .select("id")
-    .gte("last_seen", last15sec.toISOString());
+    .gte("last_seen", last5sec.toISOString());
 
   if (error) {
     console.error(error);
