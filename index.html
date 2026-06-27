@@ -542,6 +542,7 @@ let currentPlayer = null;
 let level = 1;
 let musicPlaying = false;
 let realtimeStarted = false;
+let presenceChannel = null;
 let checking = false;
 
 /*************** GAME DATA ***************/
@@ -704,7 +705,8 @@ function afterLogin() {
 
   // 👤 پروفایل
   document.getElementById("playerName").innerText = currentPlayer.name;
-  document.getElementById("playerRank").innerText = "Lv." + currentPlayer.stage;
+  document.getElementById("playerRank").innerText =
+    "Lv." + currentPlayer.stage;
 
   // 🎮 شروع بازی
   load();
@@ -712,11 +714,21 @@ function afterLogin() {
   // 🏆 لود لیدربرد
   loadLeaderboard();
 
-  // 🔴 شروع real-time sync (اگر قبلاً فعال نکردی)
+  // 🔴 شروع Realtime فقط برای لیدربرد
   startRealtime();
 
+  // ❤️ ثبت حضور کاربر
+  heartbeat();
+
+  // 👥 نمایش آنلاین‌ها
   updateOnlineCount();
-  setInterval(updateOnlineCount, 5000);
+
+  // هر 5 ثانیه حضور و تعداد آنلاین‌ها بروزرسانی شود
+  setInterval(() => {
+    heartbeat();
+    updateOnlineCount();
+  }, 5000);
+
 }
 
 /*************** showEndScreen ***************/
@@ -931,12 +943,9 @@ function startRealtime() {
 
   realtimeStarted = true;
 
-  // ساخت کانال فقط یک بار
-  presenceChannel = supabase.channel("players");
+  supabase
+    .channel("leaderboard")
 
-  presenceChannel
-
-    // تغییرات جدول
     .on(
       "postgres_changes",
       {
@@ -949,29 +958,8 @@ function startRealtime() {
       }
     )
 
-    // حضور آنلاین
-    .on("presence", { event: "sync" }, () => {
+    .subscribe();
 
-      const state = presenceChannel.presenceState();
-
-      document.getElementById("onlinePlayers").innerText =
-        Object.keys(state).length;
-
-    })
-
-    .subscribe(async (status) => {
-
-      if (status === "SUBSCRIBED" && currentPlayer) {
-
-        await presenceChannel.track({
-          id: currentPlayer.id,
-          name: currentPlayer.name,
-          online_at: new Date().toISOString()
-        });
-
-      }
-
-    });
 }
 
 /*************** MUSIC ***************/
@@ -1012,21 +1000,33 @@ async function updateOnlineCount() {
   if (!supabase) return;
 
   const now = new Date();
-  const last5min = new Date(now.getTime() - 5 * 60 * 1000);
+  const last15sec = new Date(now.getTime() - 15000);
 
   const { data, error } = await supabase
     .from("evil_fan_players")
     .select("id")
-    .gte("updated_at", last5min.toISOString());
+    .gte("last_seen", last15sec.toISOString());
 
   if (error) {
-    console.error("Online Count:", error);
+    console.error(error);
     return;
   }
 
-  const online = data ? data.length : 0;
+  document.getElementById("onlinePlayers").innerText =
+    data ? data.length : 0;
 
-  document.getElementById("onlinePlayers").innerText = online;
+}
+
+async function heartbeat() {
+
+  if (!currentPlayer) return;
+
+  await supabase
+    .from("evil_fan_players")
+    .update({
+      last_seen: new Date().toISOString()
+    })
+    .eq("id", currentPlayer.id);
 
 }
 
