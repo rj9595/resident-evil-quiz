@@ -180,20 +180,55 @@ h1 {
   align-items: center;
   justify-content: space-between;
 
-  background: #111;
+  background: black;
 
   border: 1px solid rgba(255,0,0,.3);
   border-radius: 12px;
 }
 
-#playerName{
-  color: white;
-  font-weight: bold;
+/* سمت چپ */
+.profile-left{
+    flex:1 1 auto;
+    min-width:0;
+
+    display:flex;
+    justify-content:flex-start;
 }
 
-#playerRank{
-  color: gold;
-  font-weight: bold;
+#playerName{
+    color:#fff;
+    font-size:15px;
+    font-weight:bold;
+
+    white-space:nowrap;
+
+}
+
+/* سمت راست */
+.profile-right{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+
+    gap: 8px;      /* فاصله بین دو دکمه */
+    flex-shrink:0;
+}
+
+/* دکمه‌ها */
+.profile-right button{
+    padding:8px 10px;
+    border:none;
+    border-radius:8px;
+
+    font-weight:bold;
+    cursor:pointer;
+
+    white-space:nowrap;
+    transition:.2s;
+}
+
+.profile-right button:hover{
+    transform:translateY(-2px);
 }
 
 /* باکس اصلی */
@@ -408,33 +443,6 @@ button {
   font-size: 14px;
 }
 
-#onlineCount{
-  margin-bottom: 15px;
-  padding: 10px;
-  background: rgba(255,0,0,.08);
-  border: 1px solid rgba(255,0,0,.3);
-  border-radius: 8px;
-  color: #ff6666;
-  font-size: 14px;
-  box-shadow: inset 0 0 10px rgba(255,0,0,.15);
-}
-
-#onlinePlayers{
-  color: #fff;
-  font-weight: bold;
-  text-shadow: 0 0 8px red;
-}
-
-.onlineDot{
-  display:inline-block;
-  width:10px;
-  height:10px;
-  margin-left:6px;
-  border-radius:50%;
-  background:#00ff66;
-  box-shadow:0 0 10px #00ff66;
-}
-
 #bootScreen {
   position: fixed;
   inset: 0;
@@ -460,6 +468,64 @@ button {
   50% { transform: scale(1.1); opacity: 1; }
   100% { transform: scale(1); opacity: 0.7; }
 }
+
+#feedbackModal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,.75);
+z-index:9999;
+}
+
+#feedbackBox{
+width:90%;
+max-width:420px;
+background:#111;
+border:1px solid #7a0000;
+border-radius:12px;
+padding:20px;
+box-sizing:border-box;
+}
+
+#feedbackBox h2{
+margin:0 0 15px;
+color:white;
+text-align:center;
+}
+
+#feedbackText{
+width:100%;
+height:140px;
+background:#000;
+color:white;
+border:1px solid #444;
+border-radius:8px;
+padding:10px;
+resize:none;
+box-sizing:border-box;
+}
+
+#feedbackButtons{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:15px;
+}
+
+#feedbackButtons button{
+background:#7a0000;
+color:white;
+border:none;
+padding:8px 14px;
+border-radius:6px;
+cursor:pointer;
+}
+
 </style>
 </head>
 
@@ -468,11 +534,11 @@ button {
 <h1>☣ Resident Evil Quiz ☣</h1>
 
 <div id="loginBox">
-  <h2>Enter Your Name</h2>
+  <h2>اسمتو وارد کن</h2>
 
   <input id="nameInput" placeholder="Player name..." />
 
-  <button id="startBtn" onclick="startGame()">Start</button>
+  <button id="startBtn" onclick="startGame()">شروع</button>
 
   <p id="errorText"></p>
 </div>
@@ -485,17 +551,25 @@ button {
 <div id="app" style="display:none;">
 
   <!-- PROFILE BAR -->
-  <div id="profile">
+<div id="profile">
 
-    <button id="musicBtn" onclick="toggleMusic()">
-      🎵 Music
+  <div class="profile-left">
+    <span id="playerName">Player</span>
+  </div>
+
+  <div class="profile-right">
+
+    <button id="musicBtn" onclick="toggleMusic()" style="font-size:15px; font-weight: bold;">
+      🎵 موزیک
     </button>
 
-    <span id="playerName">Player</span>
-
-    <span id="playerRank">Lv.1</span>
+    <button id="feedbackBtn" onclick="openFeedback()" style="font-size:15px; margin-bottom: 14px; font-weight: bold;"> 
+      💬 نظر یا انتقاد
+    </button>
 
   </div>
+
+</div>
 
   <!-- GAME BOX -->
   <div id="gameBox">
@@ -521,15 +595,7 @@ button {
 
   <!-- LEADERBOARD -->
   <div id="leaderboard">
-
-    <div id="onlineCount">
-      <span class="onlineDot"></span>
-      Online Survivors:
-      <span id="onlinePlayers">0</span>
-    </div>
-
     <h2>🏆 Top Survivors</h2>
-
     <!-- JS injects items here -->
   </div>
 
@@ -698,14 +764,6 @@ async function loadPlayer(id) {
   currentPlayer = data;
   level = Number(data.stage || 1);
 
-  // 🔥 مهم: ست کردن آنلاین اولیه (حل مشکل گوشی 0)
-  await supabase
-    .from("evil_fan_players")
-    .update({
-      last_seen: new Date().toISOString()
-    })
-    .eq("id", id);
-
   afterLogin();
 }
 
@@ -717,8 +775,7 @@ function afterLogin() {
 
   // 👤 پروفایل
   document.getElementById("playerName").innerText = currentPlayer.name;
-  document.getElementById("playerRank").innerText =
-    "Lv." + currentPlayer.stage;
+
 
   // 🎮 شروع بازی
   load();
@@ -728,18 +785,6 @@ function afterLogin() {
 
   // 🔴 شروع Realtime فقط برای لیدربرد
   startRealtime();
-
-  // ❤️ ثبت حضور کاربر
-  heartbeat();
-
-  // 👥 نمایش آنلاین‌ها
-  updateOnlineCount();
-
-  // هر 5 ثانیه حضور و تعداد آنلاین‌ها بروزرسانی شود
-  setInterval(() => {
-    heartbeat();
-    updateOnlineCount();
-  }, 2000);
 
 }
 
@@ -835,17 +880,15 @@ async function check() {
       level = nextLevel;
       currentPlayer.stage = level;
 
-      // 📊 آپدیت UI پروفایل
-      document.getElementById("playerRank").innerText =
-        "Lv." + level;
 
       // 💾 ذخیره در دیتابیس
       await supabase
-        .from("evil_fan_players")
-        .update({
-          stage: level
-        })
-        .eq("id", currentPlayer.id);
+      .from("evil_fan_players")
+      .update({
+      stage: level,
+      stage_time: new Date().toISOString()
+      })
+  .eq("id", currentPlayer.id);
 
       // 🏆 لیدربرد
       if (typeof loadLeaderboard === "function") {
@@ -918,15 +961,20 @@ function getAnswer() {
 /*************** Leaderboard ***************/
 async function loadLeaderboard() {
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("evil_fan_players")
-    .select("name, stage")
+    .select("name, stage, stage_time")
     .order("stage", { ascending: false })
+    .order("stage_time", { ascending: true })
     .limit(10);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
 
   const board = document.getElementById("leaderboard");
 
-  // پاک کردن آیتم‌های قبلی (غیر از header)
   document.querySelectorAll(".leaderItem").forEach(el => el.remove());
 
   data.forEach((player, index) => {
@@ -934,7 +982,8 @@ async function loadLeaderboard() {
     const div = document.createElement("div");
     div.className = "leaderItem";
 
-    if (index === 0) div.classList.add("firstPlace");
+    if (index === 0)
+      div.classList.add("firstPlace");
 
     div.innerHTML = `
       <span>#${index + 1}</span>
@@ -943,6 +992,7 @@ async function loadLeaderboard() {
     `;
 
     board.appendChild(div);
+
   });
 
 }
@@ -950,14 +1000,11 @@ async function loadLeaderboard() {
 /*************** startRealtime ***************/
 function startRealtime() {
 
-  // اگر قبلاً وصل شده، دوباره نساز
   if (realtimeStarted) return;
-
   realtimeStarted = true;
 
   supabase
     .channel("leaderboard")
-
     .on(
       "postgres_changes",
       {
@@ -969,9 +1016,7 @@ function startRealtime() {
         loadLeaderboard();
       }
     )
-
     .subscribe();
-
 }
 
 /*************** MUSIC ***************/
@@ -993,6 +1038,62 @@ function toggleMusic() {
   musicPlaying = !musicPlaying;
 }
 
+function openFeedback(){
+
+  document.getElementById("feedbackModal").style.display="flex";
+
+}
+
+function closeFeedback(){
+
+  document.getElementById("feedbackModal").style.display="none";
+
+}
+
+async function sendFeedback(){
+
+  const message=document.getElementById("feedbackText").value.trim();
+
+  if(message===""){
+
+    alert("لطفاً متن را وارد کنید.");
+
+    return;
+
+  }
+
+  const {error}=await supabase
+
+  .from("feedback")
+
+  .insert({
+
+    player_id:currentPlayer.id,
+
+    player_name:currentPlayer.name,
+
+    message:message
+
+  });
+
+  if(error){
+
+    console.error(error);
+
+    alert("ارسال نشد.");
+
+    return;
+
+  }
+
+  document.getElementById("feedbackText").value="";
+
+  closeFeedback();
+
+  alert("✅ نظر شما ارسال شد.");
+
+}
+
 /*************** آپدیت آنلاین بودن کاربر ***************/
 setInterval(async () => {
 
@@ -1007,38 +1108,37 @@ setInterval(async () => {
 
 }, 10000);
 
-async function updateOnlineCount() {
-
-  if (!supabase) return;
-
-  const now = new Date();
-  const last5sec = new Date(now.getTime() - 5000);
-
-  const { data, error } = await supabase
-    .from("evil_fan_players")
-    .select("id")
-    .gte("last_seen", last5sec.toISOString());
-
-  if (error) return;
-
-  document.getElementById("onlinePlayers").innerText =
-    data?.length || 0;
-}
-
-async function heartbeat() {
-
-  if (!currentPlayer || !supabase) return;
-
-  await supabase
-    .from("evil_fan_players")
-    .update({
-      last_seen: new Date().toISOString()
-    })
-    .eq("id", currentPlayer.id);
-
-}
 
 </script>
+
+
+<div id="feedbackModal" style="display:none;">
+
+  <div id="feedbackBox">
+
+    <h2>💬 انتقاد یا پیشنهاد</h2>
+
+    <textarea
+      id="feedbackText"
+      placeholder="نظر خودت را بنویس..."
+      maxlength="500">
+    </textarea>
+
+    <div id="feedbackButtons">
+
+      <button onclick="sendFeedback()">
+        ارسال
+      </button>
+
+      <button onclick="closeFeedback()">
+        انصراف
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
 
 </body>
 </html>
