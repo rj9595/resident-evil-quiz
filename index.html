@@ -513,7 +513,11 @@ button {
   </div>
 
   <!-- AUDIO -->
-  <audio id="bgMusic" src="sounds/Umbrella.mp3" loop></audio>
+  <audio id="bgMusic"
+       src="sounds/Umbrella.mp3"
+       preload="auto"
+       loop>
+</audio>
 
   <!-- LEADERBOARD -->
   <div id="leaderboard">
@@ -727,7 +731,7 @@ function afterLogin() {
   setInterval(() => {
     heartbeat();
     updateOnlineCount();
-  }, 3000);
+  }, 2000);
 
 }
 
