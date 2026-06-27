@@ -931,8 +931,12 @@ function startRealtime() {
 
   realtimeStarted = true;
 
-  supabase
-    .channel("players")
+  // ساخت کانال فقط یک بار
+  presenceChannel = supabase.channel("players");
+
+  presenceChannel
+
+    // تغییرات جدول
     .on(
       "postgres_changes",
       {
@@ -942,11 +946,32 @@ function startRealtime() {
       },
       () => {
         loadLeaderboard();
-        updateOnlineCount();
       }
     )
-    .subscribe();
 
+    // حضور آنلاین
+    .on("presence", { event: "sync" }, () => {
+
+      const state = presenceChannel.presenceState();
+
+      document.getElementById("onlinePlayers").innerText =
+        Object.keys(state).length;
+
+    })
+
+    .subscribe(async (status) => {
+
+      if (status === "SUBSCRIBED" && currentPlayer) {
+
+        await presenceChannel.track({
+          id: currentPlayer.id,
+          name: currentPlayer.name,
+          online_at: new Date().toISOString()
+        });
+
+      }
+
+    });
 }
 
 /*************** MUSIC ***************/
