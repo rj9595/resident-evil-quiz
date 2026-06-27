@@ -1000,7 +1000,7 @@ async function updateOnlineCount() {
   if (!supabase) return;
 
   const now = new Date();
-  const last15sec = new Date(now.getTime() - 5000);
+  const last5sec = new Date(now.getTime() - 5000);
 
   const { data, error } = await supabase
     .from("evil_fan_players")
