@@ -678,25 +678,33 @@ async function loadPlayer(id) {
     .from("evil_fan_players")
     .select("*")
     .eq("id", id)
-    .maybeSingle(); // 👈 مهم‌ترین تغییر
+    .maybeSingle();
 
-  // ❌ خطای واقعی (اینترنت / سرور)
+  // ❌ خطای سرور
   if (error) {
     console.error(error);
     alert("مشکل در اتصال به سرور");
     return;
   }
 
-  // 👤 کاربر وجود ندارد → باید بره ثبت‌نام
+  // ❌ کاربر وجود ندارد
   if (!data) {
     localStorage.removeItem("player_id");
     showLogin();
     return;
   }
 
-  // ✅ کاربر پیدا شد
+  // 👤 ذخیره کاربر
   currentPlayer = data;
   level = Number(data.stage || 1);
+
+  // 🔥 مهم: ست کردن آنلاین اولیه (حل مشکل گوشی 0)
+  await supabase
+    .from("evil_fan_players")
+    .update({
+      last_seen: new Date().toISOString()
+    })
+    .eq("id", id);
 
   afterLogin();
 }
@@ -1011,14 +1019,10 @@ async function updateOnlineCount() {
     .select("id")
     .gte("last_seen", last5sec.toISOString());
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (error) return;
 
   document.getElementById("onlinePlayers").innerText =
-    data ? data.length : 0;
-
+    data?.length || 0;
 }
 
 async function heartbeat() {
@@ -1027,7 +1031,9 @@ async function heartbeat() {
 
   await supabase
     .from("evil_fan_players")
-    .update({})
+    .update({
+      last_seen: new Date().toISOString()
+    })
     .eq("id", currentPlayer.id);
 
 }
