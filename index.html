@@ -1023,13 +1023,11 @@ async function updateOnlineCount() {
 
 async function heartbeat() {
 
-  if (!currentPlayer) return;
+  if (!currentPlayer || !supabase) return;
 
   await supabase
     .from("evil_fan_players")
-    .update({
-      last_seen: new Date().toISOString()
-    })
+    .update({})
     .eq("id", currentPlayer.id);
 
 }
